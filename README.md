@@ -159,6 +159,39 @@ LLM_API_BASE=https://api.openai.com/v1
 
 MIT License
 
-## 贡献
+## 贡献指南
 
-欢迎提交 Issue 和 Pull Request！
+欢迎贡献 AI CapTrack 项目！请遵循以下步骤：
+
+### 开发环境设置
+
+1. Fork 本仓库
+2. 克隆你的 Fork：`git clone https://github.com/YOUR_USERNAME/AICapTrack.git`
+3. 创建功能分支：`git checkout -b feature/your-feature`
+
+### 提交规范
+
+遵循 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+
+- `feat:` 新功能
+- `fix:` Bug 修复
+- `docs:` 文档更新
+- `test:` 测试相关
+- `refactor:` 代码重构
+
+### Pull Request 流程
+
+1. 确保代码符合项目规范
+2. 运行测试（如果有）
+3. 提交你的更改
+4. 推送分支到你的 Fork
+5. 创建 Pull Request 到主仓库
+
+### 联系方式
+
+- 问题反馈：https://github.com/cbfAI/ai-captrack/issues
+- 讨论交流：欢迎提交 Issue 和 Pull Request！
+
+---
+
+<p align="center">Made with ❤️ by AI CapTrack Team</p>
