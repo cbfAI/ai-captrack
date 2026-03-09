@@ -60,14 +60,12 @@ async def trigger_collection(db, enable_llm_parsing: bool = True) -> Dict[str, A
             capabilities = scraper.collect()
             
             # 打印前3条数据的详细信息用于调试
-            print(f"\n=== 采集到 {len(capabilities)} 条数据 ({scraper.source.value}) ===")
+            print(f"\n=== Collected {len(capabilities)} items ({scraper.source.value}) ===")
             for j, cap in enumerate(capabilities[:3]):
-                print(f"\n--- 第 {j+1} 条 ---")
-                print(f"名称: {cap.name}")
-                print(f"描述: {cap.description}")
-                print(f"类型: {cap.capability_type}")
-                print(f"Stars: {cap.stars}")
-                print(f"Key Features: {cap.key_features}")
+                # 安全打印，避免 Windows 编码问题
+                safe_name = cap.name.encode('ascii', 'ignore').decode('ascii')[:50] if cap.name else 'N/A'
+                safe_desc = (cap.description or '')[:100].encode('ascii', 'ignore').decode('ascii')
+                print(f"  [{j+1}] {safe_name} | Stars: {cap.stars}")
             
             deduplicated = deduplicate_capabilities(db, capabilities, scraper.source)
             
