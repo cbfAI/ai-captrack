@@ -81,3 +81,9 @@ docker-compose.override.yml
 test_*.py
 check_*.py
 simple_check.py
+test_output.txt
+test_result.txt
+db_check.txt
+
+# Claude AI assistant
+.claude/

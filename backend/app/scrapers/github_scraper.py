@@ -47,6 +47,7 @@ class GitHubScraper(BaseScraper):
             elif "model" in topics or "llm" in name.lower():
                 capability_type = CapabilityType.MODEL
 
+            license_info = repo.get("license") or {}
             capabilities.append(
                 AICapabilityCreate(
                     name=name,
@@ -54,8 +55,7 @@ class GitHubScraper(BaseScraper):
                     capability_type=capability_type,
                     source=self.source,
                     source_url=repo.get("html_url", ""),
-                    is_open_source=repo.get("license", {}).get("spdx_id") == "MIT"
-                    or repo.get("license") is not None,
+                    is_open_source=license_info.get("spdx_id") is not None,
                     stars=repo.get("stargazers_count", 0),
                     heat_score=repo.get("stargazers_count", 0) * 1.0,
                     metadata_={

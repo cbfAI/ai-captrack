@@ -16,6 +16,7 @@ class CapabilitySource(str, enum.Enum):
     HUGGINGFACE = "huggingface"
     GITHUB = "github"
     FUTURETOOLS = "futuretools"
+    OPENROUTER = "openrouter"
 
 
 class FeedbackType(str, enum.Enum):

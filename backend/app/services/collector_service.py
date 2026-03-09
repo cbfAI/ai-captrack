@@ -4,7 +4,7 @@ from datetime import datetime
 from app.scrapers.huggingface_scraper import HuggingFaceScraper
 from app.scrapers.github_scraper import GitHubScraper
 from app.scrapers.futuretools_scraper import FutureToolsScraper
-from app.scrapers.mock_scraper import MockScraper
+from app.scrapers.openrouter_scraper import OpenRouterScraper
 from app.services.deduplication_service import deduplicate_capabilities
 
 
@@ -13,7 +13,7 @@ collection_progress = {
     "status": "idle",  # idle, running, completed, error
     "current_source": None,
     "progress": 0,  # 0-100
-    "total_sources": 3,
+    "total_sources": 3,  # HuggingFace + GitHub + OpenRouter
     "current_source_index": 0,
     "results": [],
     "start_time": None,
@@ -36,7 +36,8 @@ def trigger_collection(db) -> Dict[str, Any]:
 
     scrapers = [
         HuggingFaceScraper(),
-        # GitHubScraper(),
+        GitHubScraper(),
+        OpenRouterScraper(),
         # FutureToolsScraper(),
         # MockScraper(),
     ]

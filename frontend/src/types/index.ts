@@ -1,6 +1,6 @@
 export type CapabilityType = 'Agent' | 'Code' | 'Model';
 
-export type CapabilitySource = 'huggingface' | 'github' | 'futuretools';
+export type CapabilitySource = 'huggingface' | 'github' | 'futuretools' | 'openrouter';
 
 export type FeedbackType = 'thumbs_up' | 'thumbs_down';
 

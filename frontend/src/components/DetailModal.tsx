@@ -17,6 +17,7 @@ const sourceLabels: Record<string, { label: string; color: string }> = {
   huggingface: { label: 'HuggingFace', color: 'text-yellow-600' },
   github: { label: 'GitHub', color: 'text-gray-700' },
   futuretools: { label: 'FutureTools', color: 'text-orange-600' },
+  openrouter: { label: 'OpenRouter', color: 'text-indigo-600' },
 };
 
 function formatNumber(num: number): string {
