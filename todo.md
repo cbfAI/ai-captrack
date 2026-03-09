@@ -5,16 +5,16 @@
 ## 进行中的任务
 
 ### 1. 智能解析模块优化
-**状态**: [ ] 未完成
+**状态**: [x] 已完成
 
 **任务描述**:
-- [ ] 在采集流程中接入 LLM 智能解析服务
-- [ ] 解析 AI 能力的关键特性 (key_features)
-- [ ] 提取解决的痛点 (pain_points)
-- [ ] 分析与现有方案的区别 (differentiation)
-- [ ] 实现解析结果缓存机制
-- [ ] 支持 OpenRouter/GitHub/HuggingFace 多源解析
-- [ ] 添加解析失败降级处理
+- [x] 在采集流程中接入 LLM 智能解析服务
+- [x] 解析 AI 能力的关键特性 (key_features)
+- [x] 提取解决的痛点 (pain_points)
+- [x] 分析与现有方案的区别 (differentiation)
+- [x] 实现解析结果缓存机制 (内存缓存，TTL 30天)
+- [x] 支持 OpenRouter/GitHub/HuggingFace 多源解析
+- [x] 添加解析失败降级处理
 
 **相关文件**:
 - `backend/app/services/llm_service.py`

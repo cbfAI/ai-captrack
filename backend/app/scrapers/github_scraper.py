@@ -25,15 +25,8 @@ class GitHubScraper(BaseScraper):
             data = response.json()
             return data.get("items", [])
 
-    def collect(self) -> List[AICapabilityCreate]:
-        import asyncio
-
-        try:
-            repos = asyncio.get_event_loop().run_until_complete(self.fetch_trending())
-        except RuntimeError:
-            import asyncio
-            repos = asyncio.run(self.fetch_trending())
-
+    def _parse_repos(self, repos: List[dict]) -> List[AICapabilityCreate]:
+        """解析仓库数据为能力对象"""
         capabilities = []
         for repo in repos:
             name = repo.get("full_name", "")
@@ -65,5 +58,27 @@ class GitHubScraper(BaseScraper):
                     },
                 )
             )
-
         return capabilities
+
+    async def collect_async(self) -> List[AICapabilityCreate]:
+        """异步采集方法"""
+        repos = await self.fetch_trending()
+        return self._parse_repos(repos)
+
+    def collect(self) -> List[AICapabilityCreate]:
+        """同步采集方法（兼容旧接口）"""
+        import asyncio
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        
+        if loop and loop.is_running():
+            # 在异步环境中，使用 asyncio.run 会报错
+            # 创建一个新的线程来运行
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, self.collect_async())
+                return future.result()
+        else:
+            return asyncio.run(self.collect_async())

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -8,8 +8,12 @@ router = APIRouter()
 
 
 @router.post("/trigger")
-def trigger_data_collection(db: Session = Depends(get_db)):
-    result = trigger_collection(db)
+async def trigger_data_collection(
+    db: Session = Depends(get_db),
+    enable_llm: bool = Query(True, description="是否启用 LLM 智能解析"),
+):
+    """触发数据采集，可选启用 LLM 智能解析"""
+    result = await trigger_collection(db, enable_llm_parsing=enable_llm)
     return result
 
 

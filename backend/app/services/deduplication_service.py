@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 from app.models.models import AICapability, CapabilitySource
 from app.schemas.schemas import AICapabilityCreate
@@ -42,3 +42,41 @@ def deduplicate_capabilities(
         db.refresh(cap)
 
     return new_capabilities
+
+
+def update_capability_llm_fields(
+    db: Session,
+    capability_id: str,
+    llm_parsed: Dict[str, Any],
+) -> AICapability:
+    """更新能力的 LLM 解析字段"""
+    capability = db.query(AICapability).filter(
+        AICapability.id == capability_id
+    ).first()
+    
+    if not capability:
+        raise ValueError(f"Capability not found: {capability_id}")
+    
+    # 更新 LLM 解析的字段
+    if llm_parsed.get("is_open_source") is not None:
+        capability.is_open_source = llm_parsed["is_open_source"]
+    
+    if llm_parsed.get("key_features"):
+        # 合并已有的 key_features
+        existing_features = set(capability.key_features or [])
+        new_features = set(llm_parsed["key_features"])
+        capability.key_features = list(existing_features | new_features)
+    
+    if llm_parsed.get("pain_points"):
+        # 合并已有的 pain_points
+        existing_points = set(capability.pain_points or [])
+        new_points = set(llm_parsed["pain_points"])
+        capability.pain_points = list(existing_points | new_points)
+    
+    if llm_parsed.get("differentiation"):
+        capability.differentiation = llm_parsed["differentiation"]
+    
+    db.commit()
+    db.refresh(capability)
+    
+    return capability
