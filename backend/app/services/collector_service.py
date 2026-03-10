@@ -115,8 +115,15 @@ async def trigger_collection(db, enable_llm_parsing: bool = True) -> Dict[str, A
     }
 
 
-async def _parse_capabilities_with_llm(db, capabilities: List[AICapability]) -> int:
-    """使用 LLM 批量解析能力信息"""
+async def _parse_capabilities_with_llm(db, capabilities: List[AICapability], enable_translation: bool = True) -> int:
+    """
+    使用 LLM 批量解析能力信息
+    
+    Args:
+        db: 数据库会话
+        capabilities: 待解析的能力列表
+        enable_translation: 是否启用描述翻译
+    """
     if not capabilities:
         return 0
     
@@ -132,17 +139,23 @@ async def _parse_capabilities_with_llm(db, capabilities: List[AICapability]) -> 
     ]
     
     # 批量解析（并发数 3，避免 API 限流）
-    parsed_results = await llm_service.batch_parse(items, concurrency=3)
+    parsed_results = await llm_service.batch_parse(items, concurrency=3, translate=enable_translation)
     
     # 更新数据库
     updated_count = 0
     for result in parsed_results:
         cap_id = result.get("id")
         llm_parsed = result.get("llm_parsed")
+        translated_description = result.get("description")  # 翻译后的描述
         
-        if cap_id and llm_parsed:
+        if cap_id:
             try:
-                update_capability_llm_fields(db, cap_id, llm_parsed)
+                update_capability_llm_fields(
+                    db,
+                    cap_id,
+                    llm_parsed,
+                    translated_description=translated_description if enable_translation else None,
+                )
                 updated_count += 1
             except Exception as e:
                 print(f"[LLM Update Error] {cap_id}: {e}")

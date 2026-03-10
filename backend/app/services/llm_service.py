@@ -2,6 +2,7 @@ import httpx
 import json
 import hashlib
 import time
+import re
 from typing import Optional, Dict, Any, List, Tuple
 
 from app.core.config import settings
@@ -29,17 +30,104 @@ class LLMParseCache:
         self._cache.clear()
 
 
+def is_chinese_text(text: str) -> bool:
+    """检测文本是否主要为中文"""
+    if not text:
+        return True  # 空文本视为无需翻译
+    
+    # 统计中文字符比例
+    chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', text))
+    total_chars = len(re.sub(r'\s', '', text))  # 排除空白字符
+    
+    if total_chars == 0:
+        return True
+    
+    # 如果中文字符占比超过 30%，认为是中文文本
+    return chinese_chars / total_chars > 0.3
+
+
 class LLMService:
     def __init__(self):
         self.api_key = settings.LLM_API_KEY
         self.api_url = settings.LLM_API_URL
         self.model = settings.LLM_MODEL
         self.cache = LLMParseCache(ttl_seconds=settings.CACHE_TTL_LLM_PARSE)
+        self._translation_cache: Dict[str, str] = {}  # 翻译缓存
 
     def _generate_cache_key(self, name: str, description: str) -> str:
         """生成基于名称和描述的缓存键"""
         content = f"{name}:{description}"
         return hashlib.md5(content.encode()).hexdigest()
+    
+    def _generate_translation_cache_key(self, text: str) -> str:
+        """生成翻译缓存键"""
+        return hashlib.md5(text.encode()).hexdigest()
+
+    async def translate_to_chinese(
+        self,
+        text: str,
+        use_cache: bool = True,
+    ) -> str:
+        """
+        将文本翻译为中文
+        - 如果文本已经是中文，直接返回原文
+        - 如果没有 API Key，返回原文
+        - 翻译失败时返回原文
+        """
+        if not text or not text.strip():
+            return text
+        
+        # 检查是否已经是中文
+        if is_chinese_text(text):
+            return text
+        
+        # 检查翻译缓存
+        cache_key = self._generate_translation_cache_key(text)
+        if use_cache and cache_key in self._translation_cache:
+            return self._translation_cache[cache_key]
+        
+        # 检查 API Key
+        if not self.api_key:
+            return text
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.api_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": self.model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "你是一个专业的翻译助手。请将用户提供的文本翻译成中文。只返回翻译结果，不要添加任何解释或额外内容。"
+                            },
+                            {
+                                "role": "user",
+                                "content": f"请将以下文本翻译成中文：\n\n{text}"
+                            },
+                        ],
+                        "temperature": 0.3,
+                    },
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                result = response.json()
+                
+                translated = result["choices"][0]["message"]["content"].strip()
+                
+                # 缓存翻译结果
+                if use_cache:
+                    self._translation_cache[cache_key] = translated
+                
+                return translated
+                
+        except Exception as e:
+            print(f"[Translation Error] {e}")
+            return text  # 翻译失败返回原文
 
     async def parse_capability_info(
         self,
@@ -160,8 +248,16 @@ class LLMService:
         self,
         items: List[Dict[str, Any]],
         concurrency: int = 3,
+        translate: bool = True,
     ) -> List[Dict[str, Any]]:
-        """批量解析多个能力"""
+        """
+        批量解析多个能力
+        
+        Args:
+            items: 待解析的数据列表
+            concurrency: 并发数
+            translate: 是否翻译描述为中文
+        """
         import asyncio
         
         semaphore = asyncio.Semaphore(concurrency)
@@ -169,12 +265,27 @@ class LLMService:
 
         async def parse_with_semaphore(item: Dict[str, Any]) -> Dict[str, Any]:
             async with semaphore:
+                name = item.get("name", "")
+                description = item.get("description", "")
+                metadata = item.get("metadata_", {})
+                
+                # 翻译描述为中文
+                translated_description = description
+                if translate and description:
+                    translated_description = await self.translate_to_chinese(description)
+                
+                # 解析能力信息
                 parsed = await self.parse_with_fallback(
-                    name=item.get("name", ""),
-                    description=item.get("description", ""),
-                    metadata=item.get("metadata_", {}),
+                    name=name,
+                    description=description,  # 解析时使用原文
+                    metadata=metadata,
                 )
-                return {**item, "llm_parsed": parsed}
+                
+                return {
+                    **item,
+                    "description": translated_description,  # 存储翻译后的描述
+                    "llm_parsed": parsed,
+                }
 
         tasks = [parse_with_semaphore(item) for item in items]
         results = await asyncio.gather(*tasks, return_exceptions=True)

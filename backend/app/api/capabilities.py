@@ -31,7 +31,7 @@ from app.services.cache_service import cache_service
 router = APIRouter()
 
 
-@router.get("", response_model=PaginatedResponse)
+@router.get("")
 def list_capabilities(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
@@ -42,50 +42,64 @@ def list_capabilities(
     search: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
-    filters = CapabilitiesFilter(
-        capability_type=capability_type,
-        source=source,
-        min_stars=min_stars,
-        min_heat_score=min_heat_score,
-        search=search,
-    )
+    """获取能力列表"""
+    try:
+        # 只有当有任何过滤条件时才创建 filters
+        has_filters = any([capability_type, source, min_stars is not None, min_heat_score is not None, search])
+        
+        if has_filters:
+            filters = CapabilitiesFilter(
+                capability_type=capability_type,
+                source=source,
+                min_stars=min_stars,
+                min_heat_score=min_heat_score,
+                search=search,
+            )
+            filters_dict = filters.model_dump()
+        else:
+            filters = None
+            filters_dict = {}
+        
+        filters_hash = hashlib.md5(json.dumps(filters_dict, sort_keys=True).encode()).hexdigest()
 
-    filters_dict = filters.model_dump() if filters else {}
-    filters_hash = hashlib.md5(json.dumps(filters_dict, sort_keys=True).encode()).hexdigest()
+        cached_data = cache_service.get_capabilities_cache(page, page_size, filters_hash)
+        if cached_data:
+            return cached_data
 
-    cached_data = cache_service.get_capabilities_cache(page, page_size, filters_hash)
-    if cached_data:
-        return cached_data
+        result = get_capabilities_filtered(db, page, page_size, filters)
 
-    result = get_capabilities_filtered(db, page, page_size, filters)
+        result_dict = {
+            "items": [{
+                "id": str(item.id),
+                "name": item.name,
+                "description": item.description,
+                "capability_type": item.capability_type.value if item.capability_type else None,
+                "source": item.source.value if item.source else None,
+                "source_url": item.source_url,
+                "is_open_source": item.is_open_source,
+                "key_features": item.key_features or [],
+                "pain_points": item.pain_points or [],
+                "differentiation": item.differentiation,
+                "stars": item.stars or 0,
+                "heat_score": item.heat_score or 0.0,
+                "metadata_": item.metadata_ or {},
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "updated_at": item.updated_at.isoformat() if item.updated_at else None
+            } for item in result["items"]],
+            "total": result["total"],
+            "page": result["page"],
+            "page_size": result["page_size"],
+            "filters": result["filters"].model_dump() if result["filters"] else None,
+        }
 
-    result_dict = {
-        "items": [{
-            "id": item.id,
-            "name": item.name,
-            "description": item.description,
-            "capability_type": item.capability_type,
-            "source": item.source,
-            "source_url": item.source_url,
-            "is_open_source": item.is_open_source,
-            "key_features": item.key_features,
-            "pain_points": item.pain_points,
-            "differentiation": item.differentiation,
-            "stars": item.stars,
-            "heat_score": item.heat_score,
-            "metadata_": item.metadata_,
-            "created_at": item.created_at.isoformat() if item.created_at else None,
-            "updated_at": item.updated_at.isoformat() if item.updated_at else None
-        } for item in result["items"]],
-        "total": result["total"],
-        "page": result["page"],
-        "page_size": result["page_size"],
-        "filters": result["filters"].model_dump() if result["filters"] else None,
-    }
+        cache_service.set_capabilities_cache(page, page_size, filters_hash, result_dict)
 
-    cache_service.set_capabilities_cache(page, page_size, filters_hash, result_dict)
-
-    return result_dict
+        return result_dict
+    except Exception as e:
+        print(f"Error in list_capabilities: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{capability_id}", response_model=AICapabilityResponse)
