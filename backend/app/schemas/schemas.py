@@ -2,7 +2,7 @@ from typing import Optional, List, Any
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, Field
-from app.models.models import CapabilityType, CapabilitySource, FeedbackType
+from app.models.models import CapabilityType, CapabilitySource, FeedbackType, HeatTrend
 
 
 class AICapabilityBase(BaseModel):
@@ -51,6 +51,9 @@ class AICapabilityResponse(BaseModel):
     differentiation: Optional[str] = None
     stars: int = Field(default=0)
     heat_score: float = Field(default=0.0)
+    heat_trend: str = Field(default="stable")
+    thumbs_up: int = Field(default=0)
+    thumbs_down: int = Field(default=0)
     metadata_: dict = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime

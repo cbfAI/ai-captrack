@@ -32,18 +32,24 @@
 ---
 
 ### 2. 热度评估算法优化
-**状态**: [ ] 未完成
+**状态**: [x] 已完成
 
 **任务描述**:
-- [ ] 设计多维度热度评估模型
-  - [ ] 基础指标: GitHub Stars / HuggingFace Downloads / OpenRouter 使用量
-  - [ ] 时间衰减因子: 近期活跃度权重更高
-  - [ ] 社区反馈: 用户点赞/点踩影响热度
-  - [ ] 来源权重: 不同数据源的可信度差异
-- [ ] 实现热度分数实时更新
-- [ ] 添加热度趋势计算（上升/下降）
-- [ ] 支持自定义热度权重配置
+- [x] 设计多维度热度评估模型
+  - [x] 基础指标: GitHub Stars / HuggingFace Downloads / OpenRouter 使用量
+  - [x] 时间衰减因子: 近期活跃度权重更高（90天半衰期）
+  - [x] 社区反馈: 用户点赞/点踩影响热度
+  - [x] 来源权重: 不同数据源的可信度差异 (github: 1.0, huggingface: 0.9, openrouter: 0.8)
+- [x] 实现热度分数实时更新
+- [x] 添加热度趋势计算（上升/下降/稳定）
+- [x] 支持自定义热度权重配置 (HeatScoreConfig)
 - [ ] 编写热度算法单元测试
+
+**新增字段**:
+- `heat_trend`: 热度趋势 (rising/stable/declining)
+- `previous_heat_score`: 上次热度分数
+- `thumbs_up`: 点赞数
+- `thumbs_down`: 点踩数
 
 **相关文件**:
 - `backend/app/services/heat_score_service.py` (新建)
