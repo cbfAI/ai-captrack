@@ -78,6 +78,10 @@ Thumbs.db
 docker-compose.override.yml
 
 # Test files
+test/
+
+# Legacy test files (deprecated - use test/ directory)
 test_*.py
-check_*.py
-simple_check.py
+
+# Claude AI assistant
+.claude/

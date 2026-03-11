@@ -42,6 +42,12 @@ export const capabilitiesApi = {
     if (filters?.search) {
       params.append('search', filters.search);
     }
+    if (filters?.sort_by) {
+      params.append('sort_by', filters.sort_by);
+    }
+    if (filters?.sort_order) {
+      params.append('sort_order', filters.sort_order);
+    }
 
     const response = await api.get<PaginatedResponse>(`/capabilities?${params.toString()}`);
     return response.data;

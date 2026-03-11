@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { CapabilityType, CapabilitiesFilter } from '@/types';
+import type { CapabilityType, CapabilitiesFilter, SortBy, SortOrder } from '@/types';
 
 interface FilterBarProps {
   filters: CapabilitiesFilter;
@@ -14,15 +14,21 @@ const capabilityTypes: { value: CapabilityType | ''; label: string }[] = [
   { value: 'Model', label: 'Model' },
 ];
 
-type SortOption = 'stars_desc' | 'stars_asc' | 'heat_desc' | 'heat_asc' | 'name_asc' | 'name_desc';
+interface SortOption {
+  sort_by: SortBy;
+  sort_order: SortOrder;
+  label: string;
+}
 
-const sortOptions: { value: SortOption; label: string }[] = [
-  { value: 'stars_desc', label: '⭐ Stars 从高到低' },
-  { value: 'stars_asc', label: '⭐ Stars 从低到高' },
-  { value: 'heat_desc', label: '🔥 热度从高到低' },
-  { value: 'heat_asc', label: '🔥 热度从低到高' },
-  { value: 'name_asc', label: '📝 名称 A-Z' },
-  { value: 'name_desc', label: '📝 名称 Z-A' },
+const sortOptions: SortOption[] = [
+  { sort_by: 'heat', sort_order: 'desc', label: '🔥 热度从高到低' },
+  { sort_by: 'heat', sort_order: 'asc', label: '🔥 热度从低到高' },
+  { sort_by: 'stars', sort_order: 'desc', label: '⭐ Stars 从高到低' },
+  { sort_by: 'stars', sort_order: 'asc', label: '⭐ Stars 从低到高' },
+  { sort_by: 'name', sort_order: 'asc', label: '📝 名称 A-Z' },
+  { sort_by: 'name', sort_order: 'desc', label: '📝 名称 Z-A' },
+  { sort_by: 'created_at', sort_order: 'desc', label: '🕐 最新添加' },
+  { sort_by: 'updated_at', sort_order: 'desc', label: '🔄 最近更新' },
 ];
 
 export function FilterBar({ filters, onFiltersChange, totalCount }: FilterBarProps) {
@@ -37,11 +43,25 @@ export function FilterBar({ filters, onFiltersChange, totalCount }: FilterBarPro
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value as SortOption;
+    const value = e.target.value;
+    if (!value) {
+      const { sort_by, sort_order, ...restFilters } = filters;
+      onFiltersChange(restFilters);
+      return;
+    }
+    const [sort_by, sort_order] = value.split('_') as [SortBy, SortOrder];
     onFiltersChange({
       ...filters,
-      sort: value,
+      sort_by,
+      sort_order,
     });
+  };
+
+  const getCurrentSortValue = () => {
+    if (filters.sort_by && filters.sort_order) {
+      return `${filters.sort_by}_${filters.sort_order}`;
+    }
+    return '';
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -65,7 +85,7 @@ export function FilterBar({ filters, onFiltersChange, totalCount }: FilterBarPro
     onFiltersChange({});
   };
 
-  const hasActiveFilters = filters.capability_type || filters.min_stars || filters.search || filters.sort;
+  const hasActiveFilters = filters.capability_type || filters.min_stars || filters.search || filters.sort_by;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
@@ -98,13 +118,13 @@ export function FilterBar({ filters, onFiltersChange, totalCount }: FilterBarPro
         </select>
 
         <select
-          value={filters.sort || ''}
+          value={getCurrentSortValue()}
           onChange={handleSortChange}
           className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
         >
-          <option value="">排序方式</option>
+          <option value="">默认排序（热度）</option>
           {sortOptions.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={`${option.sort_by}_${option.sort_order}`} value={`${option.sort_by}_${option.sort_order}`}>
               {option.label}
             </option>
           ))}

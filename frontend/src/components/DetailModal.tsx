@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useCapabilityById } from '@/hooks/useApi';
 import type { CapabilityType } from '@/types';
 
@@ -17,6 +16,7 @@ const sourceLabels: Record<string, { label: string; color: string }> = {
   huggingface: { label: 'HuggingFace', color: 'text-yellow-600' },
   github: { label: 'GitHub', color: 'text-gray-700' },
   futuretools: { label: 'FutureTools', color: 'text-orange-600' },
+  openrouter: { label: 'OpenRouter', color: 'text-indigo-600' },
 };
 
 function formatNumber(num: number): string {
@@ -31,7 +31,6 @@ function formatNumber(num: number): string {
 
 export function DetailModal({ capabilityId, onClose }: DetailModalProps) {
   const { data: capability, isLoading, error } = useCapabilityById(capabilityId);
-  const [imageError, setImageError] = useState(false);
 
   if (isLoading) {
     return (
@@ -110,7 +109,7 @@ export function DetailModal({ capabilityId, onClose }: DetailModalProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
                 <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
@@ -126,8 +125,26 @@ export function DetailModal({ capabilityId, onClose }: DetailModalProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                 </svg>
                 <span className="text-lg font-bold text-gray-900">{formatNumber(capability.heat_score)}</span>
+                {capability.heat_trend && (
+                  <span className={`text-xs px-1 rounded ${
+                    capability.heat_trend === 'rising' ? 'bg-green-100 text-green-600' :
+                    capability.heat_trend === 'declining' ? 'bg-red-100 text-red-600' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {capability.heat_trend === 'rising' ? '↑' : 
+                     capability.heat_trend === 'declining' ? '↓' : '→'}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-gray-500">热度</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-lg font-bold text-green-600">{capability.thumbs_up || 0}</span>
+                <span className="text-gray-300">/</span>
+                <span className="text-lg font-bold text-red-600">{capability.thumbs_down || 0}</span>
+              </div>
+              <p className="text-sm text-gray-500">赞/踩</p>
             </div>
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
@@ -142,6 +159,14 @@ export function DetailModal({ capabilityId, onClose }: DetailModalProps) {
             <p className="text-gray-600 leading-relaxed">
               {capability.description || '暂无描述'}
             </p>
+            {capability.translated_description && (
+              <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">中文翻译：</span>
+                  {capability.translated_description}
+                </p>
+              </div>
+            )}
           </div>
 
           {capability.key_features && capability.key_features.length > 0 && (

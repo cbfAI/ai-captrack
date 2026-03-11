@@ -1,4 +1,4 @@
-import { favoritesApi, Statistics } from '@/services/api';
+import type { Statistics } from '@/services/api';
 
 interface StatsCardProps {
   statistics: Statistics | undefined;

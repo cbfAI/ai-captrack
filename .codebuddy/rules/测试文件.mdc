@@ -1,0 +1,9 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-03-09T11:02:51.239Z
+provider: 
+---
+
+测试文件,测试脚本,临时文件等放置于test目录下
