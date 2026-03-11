@@ -43,7 +43,7 @@
 - [x] 实现热度分数实时更新
 - [x] 添加热度趋势计算（上升/下降/稳定）
 - [x] 支持自定义热度权重配置 (HeatScoreConfig)
-- [ ] 编写热度算法单元测试
+- [x] 编写热度算法单元测试 (31个测试用例全部通过)
 
 **新增字段**:
 - `heat_trend`: 热度趋势 (rising/stable/declining)
@@ -91,15 +91,39 @@ heat_score = base_score * time_decay * source_weight + feedback_bonus
 ## 待规划的任务
 
 ### 3. API 排序功能实现
-**状态**: [ ] 未完成
+**状态**: [x] 已完成
 
-- [ ] 后端支持 sort 参数排序
-- [ ] 支持多种排序方式 (stars/heat/name)
-- [ ] 前后端联调
+- [x] 后端支持 sort 参数排序
+- [x] 支持多种排序方式 (stars/heat/name/created_at/updated_at)
+- [x] 前后端联调
+
+**实现详情**:
+- 新增 `SortBy` 枚举: `stars`, `heat`, `name`, `created_at`, `updated_at`
+- 新增 `SortOrder` 枚举: `asc`, `desc`
+- 默认按热度降序排列
+- 前端FilterBar支持8种排序选项
 
 ### 4. 集成测试
-**状态**: [ ] 未完成
+**状态**: [x] 已完成
 
-- [ ] 采集器单元测试
-- [ ] API 端点测试
-- [ ] 前端组件测试
+**测试文件**:
+- `backend/tests/test_scrapers.py` - 采集器单元测试
+- `backend/tests/test_api.py` - API端点测试
+- `frontend/src/components/__tests__/` - 组件测试
+
+**测试覆盖**:
+- [x] 采集器解析逻辑测试
+- [x] API CRUD操作测试
+- [x] 参数验证测试
+- [x] 前端组件测试
+
+**测试运行方式**:
+```bash
+# 后端测试
+cd backend && pytest tests/ -v
+
+# 前端测试
+cd frontend && npm test
+```
+
+**文档**: 详见 `TESTING.md`

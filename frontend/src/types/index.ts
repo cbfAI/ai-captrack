@@ -8,6 +8,7 @@ export interface AICapability {
   id: string;
   name: string;
   description: string | null;
+  translated_description: string | null;
   capability_type: CapabilityType;
   source: CapabilitySource;
   source_url: string | null;
@@ -17,6 +18,9 @@ export interface AICapability {
   differentiation: string | null;
   stars: number;
   heat_score: number;
+  heat_trend: string | null;
+  thumbs_up: number;
+  thumbs_down: number;
   metadata_: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -29,13 +33,17 @@ export interface UserFeedback {
   created_at: string;
 }
 
+export type SortBy = 'stars' | 'heat' | 'name' | 'created_at' | 'updated_at';
+export type SortOrder = 'asc' | 'desc';
+
 export interface CapabilitiesFilter {
   capability_type?: CapabilityType;
   source?: CapabilitySource;
   min_stars?: number;
   min_heat_score?: number;
   search?: string;
-  sort?: 'stars_desc' | 'stars_asc' | 'heat_desc' | 'heat_asc' | 'name_asc' | 'name_desc';
+  sort_by?: SortBy;
+  sort_order?: SortOrder;
 }
 
 export interface PaginatedResponse {

@@ -16,6 +16,8 @@ from app.schemas.schemas import (
     PaginatedResponse,
     CapabilityType,
     CapabilitySource,
+    SortBy,
+    SortOrder,
 )
 from app.services.capability_service import (
     get_capabilities,
@@ -40,6 +42,8 @@ def list_capabilities(
     min_stars: Optional[int] = Query(None, ge=0),
     min_heat_score: Optional[float] = Query(None, ge=0),
     search: Optional[str] = None,
+    sort_by: SortBy = Query(SortBy.HEAT, description="排序字段"),
+    sort_order: SortOrder = Query(SortOrder.DESC, description="排序方向"),
     db: Session = Depends(get_db),
 ):
     """获取能力列表"""
@@ -54,13 +58,25 @@ def list_capabilities(
                 min_stars=min_stars,
                 min_heat_score=min_heat_score,
                 search=search,
+                sort_by=sort_by,
+                sort_order=sort_order,
             )
             filters_dict = filters.model_dump()
         else:
-            filters = None
-            filters_dict = {}
+            # 无其他过滤条件，但仍需排序
+            filters = CapabilitiesFilter(
+                sort_by=sort_by,
+                sort_order=sort_order,
+            )
+            filters_dict = {"sort_by": sort_by.value, "sort_order": sort_order.value}
         
-        filters_hash = hashlib.md5(json.dumps(filters_dict, sort_keys=True).encode()).hexdigest()
+        # 包含排序参数的缓存key
+        cache_dict = {
+            "filters": filters_dict,
+            "sort_by": sort_by.value,
+            "sort_order": sort_order.value,
+        }
+        filters_hash = hashlib.md5(json.dumps(cache_dict, sort_keys=True).encode()).hexdigest()
 
         cached_data = cache_service.get_capabilities_cache(page, page_size, filters_hash)
         if cached_data:
@@ -73,6 +89,7 @@ def list_capabilities(
                 "id": str(item.id),
                 "name": item.name,
                 "description": item.description,
+                "translated_description": item.translated_description,
                 "capability_type": item.capability_type.value if item.capability_type else None,
                 "source": item.source.value if item.source else None,
                 "source_url": item.source_url,
@@ -82,6 +99,9 @@ def list_capabilities(
                 "differentiation": item.differentiation,
                 "stars": item.stars or 0,
                 "heat_score": item.heat_score or 0.0,
+                "heat_trend": item.heat_trend.value if hasattr(item.heat_trend, 'value') else item.heat_trend,
+                "thumbs_up": item.thumbs_up or 0,
+                "thumbs_down": item.thumbs_down or 0,
                 "metadata_": item.metadata_ or {},
                 "created_at": item.created_at.isoformat() if item.created_at else None,
                 "updated_at": item.updated_at.isoformat() if item.updated_at else None

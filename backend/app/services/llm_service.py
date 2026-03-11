@@ -93,7 +93,7 @@ class LLMService:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.api_url}/chat/completions",
+                    f"{self.api_url}/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
@@ -112,7 +112,7 @@ class LLMService:
                         ],
                         "temperature": 0.3,
                     },
-                    timeout=30.0,
+                    timeout=60.0,
                 )
                 response.raise_for_status()
                 result = response.json()
@@ -169,7 +169,7 @@ class LLMService:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.api_url}/chat/completions",
+                    f"{self.api_url}/v1/chat/completions",
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
                         "Content-Type": "application/json",
@@ -182,7 +182,7 @@ class LLMService:
                         ],
                         "temperature": 0.3,
                     },
-                    timeout=30.0,
+                    timeout=60.0,
                 )
                 response.raise_for_status()
                 result = response.json()

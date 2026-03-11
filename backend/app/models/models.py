@@ -37,6 +37,7 @@ class AICapability(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
+    translated_description = Column(Text)  # 中文翻译
     capability_type = Column(Enum(CapabilityType), nullable=False, index=True)
     source = Column(Enum(CapabilitySource), nullable=False)
     source_url = Column(String(500))

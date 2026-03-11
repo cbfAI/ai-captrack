@@ -1,7 +1,8 @@
 from typing import Optional, List, Any
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, Field
+from enum import Enum
+from pydantic import BaseModel, Field, field_validator
 from app.models.models import CapabilityType, CapabilitySource, FeedbackType, HeatTrend
 
 
@@ -42,6 +43,7 @@ class AICapabilityResponse(BaseModel):
     id: str
     name: str
     description: Optional[str] = None
+    translated_description: Optional[str] = None
     capability_type: str
     source: str
     source_url: Optional[str] = None
@@ -51,12 +53,19 @@ class AICapabilityResponse(BaseModel):
     differentiation: Optional[str] = None
     stars: int = Field(default=0)
     heat_score: float = Field(default=0.0)
-    heat_trend: str = Field(default="stable")
+    heat_trend: Optional[str] = None
     thumbs_up: int = Field(default=0)
     thumbs_down: int = Field(default=0)
     metadata_: dict = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime
+    
+    @field_validator('heat_trend', mode='before')
+    @classmethod
+    def convert_heat_trend(cls, v):
+        if hasattr(v, 'value'):
+            return v.value
+        return v
 
     class Config:
         from_attributes = True
@@ -99,12 +108,27 @@ class StatisticsResponse(BaseModel):
     avg_heat_score: float
 
 
+class SortBy(str, Enum):
+    STARS = "stars"
+    HEAT = "heat"
+    NAME = "name"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+
+
+class SortOrder(str, Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
 class CapabilitiesFilter(BaseModel):
     capability_type: Optional[CapabilityType] = None
     source: Optional[CapabilitySource] = None
     min_stars: Optional[int] = Field(None, ge=0)
     min_heat_score: Optional[float] = Field(None, ge=0)
     search: Optional[str] = None
+    sort_by: Optional[SortBy] = SortBy.HEAT
+    sort_order: Optional[SortOrder] = SortOrder.DESC
 
 
 class PaginatedResponse(BaseModel):

@@ -5,6 +5,7 @@ import { useSubmitFeedback } from '@/hooks/useApi';
 interface CapabilityCardProps {
   capability: AICapability;
   onClick?: () => void;
+  onShare?: () => void;
 }
 
 const typeColors: Record<CapabilityType, { bg: string; text: string; border: string }> = {
@@ -91,6 +92,16 @@ export function CapabilityCard({ capability, onClick }: CapabilityCardProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
               </svg>
               <span className="font-medium text-gray-700">{formatNumber(capability.heat_score)}</span>
+              {capability.heat_trend && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                  capability.heat_trend === 'rising' ? 'bg-green-100 text-green-600' :
+                  capability.heat_trend === 'declining' ? 'bg-red-100 text-red-600' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {capability.heat_trend === 'rising' ? '↑' : 
+                   capability.heat_trend === 'declining' ? '↓' : '→'}
+                </span>
+              )}
             </div>
           </div>
 

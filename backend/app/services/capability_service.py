@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, desc, asc
 
 from app.models.models import AICapability, UserFeedback, FeedbackType
 from app.schemas.schemas import (
@@ -8,6 +8,8 @@ from app.schemas.schemas import (
     AICapabilityUpdate,
     FeedbackCreate,
     CapabilitiesFilter,
+    SortBy,
+    SortOrder,
 )
 
 
@@ -44,6 +46,27 @@ def get_capabilities_filtered(
                     AICapability.description.ilike(search_term),
                 )
             )
+        
+        # 排序逻辑
+        sort_by = filters.sort_by or SortBy.HEAT
+        sort_order = filters.sort_order or SortOrder.DESC
+        
+        # 映射排序字段
+        sort_column_map = {
+            SortBy.STARS: AICapability.stars,
+            SortBy.HEAT: AICapability.heat_score,
+            SortBy.NAME: AICapability.name,
+            SortBy.CREATED_AT: AICapability.created_at,
+            SortBy.UPDATED_AT: AICapability.updated_at,
+        }
+        
+        sort_column = sort_column_map.get(sort_by, AICapability.heat_score)
+        
+        # 应用排序
+        if sort_order == SortOrder.DESC:
+            query = query.order_by(desc(sort_column))
+        else:
+            query = query.order_by(asc(sort_column))
 
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
