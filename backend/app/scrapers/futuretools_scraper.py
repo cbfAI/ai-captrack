@@ -9,6 +9,7 @@ class FutureToolsScraper(BaseScraper):
     source = CapabilitySource.FUTURETOOLS
 
     async def fetch_tools(self) -> List[dict]:
+        """Fetch tools from FutureTools.io (not yet implemented)."""
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 "https://www.futuretools.io/tools",
@@ -17,5 +18,7 @@ class FutureToolsScraper(BaseScraper):
             response.raise_for_status()
             return []
 
-    def collect(self) -> List[AICapabilityCreate]:
+    async def collect(self) -> List[AICapabilityCreate]:
+        """Collect AI tools from FutureTools.io (placeholder)."""
+        # TODO: Implement actual scraping logic
         return []

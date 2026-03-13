@@ -1,3 +1,4 @@
+"""Collection API endpoints with async support."""
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -8,11 +9,16 @@ router = APIRouter()
 
 
 @router.post("/trigger")
-def trigger_data_collection(db: Session = Depends(get_db)):
-    result = trigger_collection(db)
+async def trigger_data_collection(db: Session = Depends(get_db)):
+    """Trigger a new data collection job.
+    
+    Runs all scrapers asynchronously and returns the collection results.
+    """
+    result = await trigger_collection(db)
     return result
 
 
 @router.get("/progress")
-def get_progress():
-    return get_collection_progress()
+def get_progress(db: Session = Depends(get_db)):
+    """Get the progress of the most recent collection job."""
+    return get_collection_progress(db)

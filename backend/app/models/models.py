@@ -58,3 +58,40 @@ class UserFavorite(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     capability_id = Column(String(36), nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class JobStatus(str, enum.Enum):
+    IDLE = "idle"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    ERROR = "error"
+
+
+class CollectionJob(Base):
+    """Database-backed job tracking to replace global mutable state."""
+    __tablename__ = "collection_jobs"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    status = Column(Enum(JobStatus), default=JobStatus.IDLE, index=True)
+    current_source = Column(String(50))
+    progress = Column(Integer, default=0)
+    total_sources = Column(Integer, default=3)
+    current_source_index = Column(Integer, default=0)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CollectionJobResult(Base):
+    """Per-source results for a collection job."""
+    __tablename__ = "collection_job_results"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    job_id = Column(String(36), nullable=False, index=True)
+    source = Column(String(50), nullable=False)
+    collected = Column(Integer, default=0)
+    after_dedup = Column(Integer, default=0)
+    status = Column(String(20), default="success")
+    error_message = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)

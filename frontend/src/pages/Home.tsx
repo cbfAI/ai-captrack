@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useCapabilities } from '@/hooks/useApi';
 import { Header } from '@/components/Header';
 import { FilterBar } from '@/components/FilterBar';
 import { CapabilityCard } from '@/components/CapabilityCard';
 import { Pagination } from '@/components/Pagination';
-import { DetailModal } from '@/components/DetailModal';
 import { CardSkeleton, FilterBarSkeleton } from '@/components/Skeleton';
 import { StatsCard } from '@/components/StatsCard';
 import { favoritesApi, Statistics } from '@/services/api';
 import type { CapabilitiesFilter } from '@/types';
+
+// Lazy load DetailModal - only loads when user clicks a card
+const DetailModal = lazy(() => import('@/components/DetailModal').then(module => ({ default: module.DetailModal })));
 
 export function Home() {
   const [page, setPage] = useState(1);
@@ -38,9 +40,9 @@ export function Home() {
     setSelectedCapabilityId(null);
   };
 
-  const handleExport = () => {
+const handleExport = () => {
     if (!data?.items) return;
-    
+
     const csvContent = [
       ['名称', '描述', '类型', '来源', 'Stars', '热度', '开源', 'URL'].join(','),
       ...data.items.map(item => [
@@ -60,20 +62,6 @@ export function Home() {
     link.href = URL.createObjectURL(blob);
     link.download = `ai_capabilities_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-  };
-
-  const handleShare = (capabilityId: string) => {
-    const url = window.location.origin + '?capability=' + capabilityId;
-    if (navigator.share) {
-      navigator.share({
-        title: 'AI CapTrack',
-        text: '查看这个 AI 能力',
-        url: url
-      });
-    } else {
-      navigator.clipboard.writeText(url);
-      alert('链接已复制到剪贴板');
-    }
   };
 
   const totalPages = data ? Math.ceil(data.total / pageSize) : 0;
@@ -124,12 +112,11 @@ export function Home() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {data.items.map((capability) => (
-                  <CapabilityCard 
-                    key={capability.id} 
-                    capability={capability}
-                    onClick={() => handleCardClick(capability.id)}
-                    onShare={() => handleShare(capability.id)}
-                  />
+<CapabilityCard
+                  key={capability.id}
+                  capability={capability}
+                  onClick={() => handleCardClick(capability.id)}
+                />
                 ))}
               </div>
             )}
@@ -144,10 +131,20 @@ export function Home() {
       </main>
 
       {selectedCapabilityId && (
-        <DetailModal 
-          capabilityId={selectedCapabilityId} 
-          onClose={handleCloseDetail} 
-        />
+        <Suspense fallback={
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4">
+              <div className="flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+          </div>
+        }>
+          <DetailModal
+            capabilityId={selectedCapabilityId}
+            onClose={handleCloseDetail}
+          />
+        </Suspense>
       )}
 
       <footer className="border-t border-gray-200/50 mt-16 py-8 bg-white/50 backdrop-blur-sm">

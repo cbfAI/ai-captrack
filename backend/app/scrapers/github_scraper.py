@@ -9,6 +9,7 @@ class GitHubScraper(BaseScraper):
     source = CapabilitySource.GITHUB
 
     async def fetch_trending(self) -> List[dict]:
+        """Fetch trending AI repositories from GitHub."""
         headers = {"Accept": "application/vnd.github.v3+json"}
         async with httpx.AsyncClient(headers=headers) as client:
             response = await client.get(
@@ -25,14 +26,9 @@ class GitHubScraper(BaseScraper):
             data = response.json()
             return data.get("items", [])
 
-    def collect(self) -> List[AICapabilityCreate]:
-        import asyncio
-
-        try:
-            repos = asyncio.get_event_loop().run_until_complete(self.fetch_trending())
-        except RuntimeError:
-            import asyncio
-            repos = asyncio.run(self.fetch_trending())
+    async def collect(self) -> List[AICapabilityCreate]:
+        """Collect AI capabilities from GitHub trending repositories."""
+        repos = await self.fetch_trending()
 
         capabilities = []
         for repo in repos:

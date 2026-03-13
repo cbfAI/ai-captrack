@@ -31,7 +31,7 @@ function formatNumber(num: number): string {
 
 export function DetailModal({ capabilityId, onClose }: DetailModalProps) {
   const { data: capability, isLoading, error } = useCapabilityById(capabilityId);
-  const [imageError, setImageError] = useState(false);
+  const [_imageError] = useState(false); // Reserved for future image error handling
 
   if (isLoading) {
     return (

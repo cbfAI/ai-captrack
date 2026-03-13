@@ -9,57 +9,58 @@ from app.schemas.schemas import AICapabilityCreate
 class HuggingFaceScraper(BaseScraper):
     source = CapabilitySource.HUGGINGFACE
 
-    def fetch_model_readme(self, model_id: str) -> str:
+    async def fetch_model_readme(self, model_id: str) -> str:
         """从模型的 README.md 中提取描述"""
         try:
-            response = httpx.get(
-                f"https://huggingface.co/{model_id}/resolve/main/README.md",
-                timeout=10.0,
-                follow_redirects=True,
-            )
-            if response.status_code == 200:
-                readme = response.text
-                lines = readme.split('\n')
-                
-                description = ""
-                in_description = False
-                
-                for i, line in enumerate(lines):
-                    # 跳过 YAML 元数据部分（以 --- 开头）
-                    if i == 0 and line.strip() == '---':
-                        continue
-                    if i > 0 and line.strip() == '---':
-                        continue
-                    
-                    # 找到第一个非元数据行作为描述开始
-                    if i > 0 and line.strip() and not line.startswith('#') and not line.startswith('```'):
-                        in_description = True
-                        description += line.strip() + " "
-                    elif in_description and line.strip():
-                        description += line.strip() + " "
-                    elif in_description and not line.strip():
-                        break
-                    
-                    if len(description) > 300:
-                        break
-                
-                return description.strip()[:300]
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"https://huggingface.co/{model_id}/resolve/main/README.md",
+                    timeout=10.0,
+                    follow_redirects=True,
+                )
+                if response.status_code == 200:
+                    readme = response.text
+                    lines = readme.split('\n')
+
+                    description = ""
+                    in_description = False
+
+                    for i, line in enumerate(lines):
+                        # 跳过 YAML 元数据部分（以 --- 开头）
+                        if i == 0 and line.strip() == '---':
+                            continue
+                        if i > 0 and line.strip() == '---':
+                            continue
+
+                        # 找到第一个非元数据行作为描述开始
+                        if i > 0 and line.strip() and not line.startswith('#') and not line.startswith('```'):
+                            in_description = True
+                            description += line.strip() + " "
+                        elif in_description and line.strip():
+                            description += line.strip() + " "
+                        elif in_description and not line.strip():
+                            break
+
+                        if len(description) > 300:
+                            break
+
+                    return description.strip()[:300]
         except Exception:
             pass
         return ""
 
-    def collect(self) -> List[AICapabilityCreate]:
-        import httpx
-
-        response = httpx.get(
-            "https://huggingface.co/api/models",
-            params={"sort": "downloads", "direction": -1, "limit": 50},
-            timeout=30.0,
-        )
-        models = response.json()
+    async def collect(self) -> List[AICapabilityCreate]:
+        """Collect AI models from HuggingFace."""
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://huggingface.co/api/models",
+                params={"sort": "downloads", "direction": -1, "limit": 50},
+                timeout=30.0,
+            )
+            models = response.json()
 
         capabilities = []
-        
+
         for model in models:
             model_id = model.get("modelId", "")
             tags = model.get("tags", [])
@@ -73,8 +74,8 @@ class HuggingFaceScraper(BaseScraper):
                 capability_type = CapabilityType.CODE
 
             # 尝试从 README 获取描述
-            description = self.fetch_model_readme(model_id)
-            
+            description = await self.fetch_model_readme(model_id)
+
             # 如果 README 没有描述，使用 pipeline_tag
             if not description:
                 description = pipeline_tag or ""

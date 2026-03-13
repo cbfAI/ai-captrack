@@ -8,7 +8,7 @@ interface HeaderProps {
 
 export function Header({ onExport, onToggleStats, showStats }: HeaderProps) {
   const triggerCollection = useTriggerCollection();
-  const { data: progress, isLoading: progressLoading } = useCollectionProgress();
+  const { data: progress } = useCollectionProgress();
 
   const handleRefresh = () => {
     triggerCollection.mutate();

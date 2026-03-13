@@ -19,12 +19,17 @@ export const useCapabilityById = (id: string) => {
 
 export const useSubmitFeedback = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ capabilityId, feedbackType }: { capabilityId: string; feedbackType: FeedbackType }) =>
       capabilitiesApi.submitFeedback(capabilityId, feedbackType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['capabilities'] });
+    },
+    onError: (error) => {
+      // Log error for debugging - could also show a toast notification
+      console.error('Failed to submit feedback:', error);
+      // Note: In production, integrate with a toast/notification system
     },
   });
 };

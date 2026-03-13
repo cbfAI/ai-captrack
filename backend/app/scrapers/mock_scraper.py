@@ -7,7 +7,7 @@ from app.schemas.schemas import AICapabilityCreate
 class MockScraper(BaseScraper):
     source = CapabilitySource.GITHUB
 
-    def collect(self) -> List[AICapabilityCreate]:
+    async def collect(self) -> List[AICapabilityCreate]:
         """生成模拟数据用于测试"""
         return [
             AICapabilityCreate(
